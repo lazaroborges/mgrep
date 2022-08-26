@@ -23,7 +23,6 @@ func main() {
 		return
 	}
 
-	var readIt []string
 	/* 	var wg sync.WaitGroup
 	 */
 	/* 	wg.Add(1)
@@ -31,13 +30,24 @@ func main() {
 
 		filesSplitter(file.Name(), args[1], &wg)
 	}() */
-	arrayOfFiles(args[0], &readIt)
+	readCh := make(chan string)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		arrayOfFiles(args[0], readCh)
+
+		defer close(readCh)
+		defer fmt.Println("channel closed")
+		defer wg.Done()
+	}()
+	var i int
+	for value := range readCh {
+		fmt.Println("hjere  ____", value, i)
+		i++
+	}
+	wg.Wait()
 
 	fmt.Println("\n \n \n")
-
-	for k, v := range readIt {
-		fmt.Println(k, v)
-	}
 
 }
 
@@ -64,27 +74,24 @@ func matchFinder(lineno int, line string, match string, filename string) {
 	}
 }
 
-func arrayOfFiles(directory string, returnable *[]string) {
+func arrayOfFiles(directory string, readCh chan string) {
 	files, err := ioutil.ReadDir(directory)
 	fmt.Println(directory, "to be serarched")
 	if err != nil {
 		log.Fatal(err)
-
 	}
 
-	for _, file := range files {
-		fmt.Println(file.Name(), file.IsDir())
+	for k, file := range files {
+		fmt.Println("-------", file.Name(), file.IsDir())
 		if !file.IsDir() {
-			directory = strings.Replace(directory, "//", "/", 1)
-			fmt.Println("____________________", directory)
-			*returnable = append(*returnable, directory+file.Name())
+			directory = strings.Replace(directory, "//", "/", 1) + "/" + file.Name()
+			readCh <- directory
+			fmt.Println(k, directory)
+			break
 		} else {
 			a := fmt.Sprintf("%s/%s", directory, file.Name())
-			arrayOfFiles(a, returnable)
-			fmt.Println("breaking here 2", a)
-
+			arrayOfFiles(a, readCh)
 		}
-		fmt.Println(file.Name(), file.IsDir())
 	}
 
 }
