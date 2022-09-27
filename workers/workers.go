@@ -40,7 +40,7 @@ func ListFiles(directory string, readCh chan string, wg *sync.WaitGroup, filesTo
 	}
 }
 
-// Splits a file in Lines, send those lines for matching at a different functions that prints those matches
+// LineSplitter takes a filePath string to read a file, receives a chan of type Lines to send the lines in the format of the Line struct to be compared on the MatchFinder function, and counts the total number of lines to be compared during an invocation on the lines pointer to an int variable.
 func LineSplitter(filePath string, Lines chan Line, lines *int) {
 	readFile, err := os.Open(filePath)
 
@@ -64,7 +64,7 @@ func LineSplitter(filePath string, Lines chan Line, lines *int) {
 	defer readFile.Close()
 }
 
-// Receives a line of a file, finds match
+// MatchFinder receives a variable of type Line to be compared, a value match of type string to be compared with, and a pointer to the matches of type to count the number of matches founded during an invocation of the program.
 func MatchFinder(elem Line, match string, matches *int) {
 	matched, _ := regexp.MatchString(match, elem.line)
 	if matched {
